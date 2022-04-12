@@ -1,37 +1,40 @@
-import { BaseEntity, Column, Entity, ObjectID, ObjectIdColumn } from 'typeorm';
+import { ObjectId } from 'mongodb';
+import { Document } from 'mongoose';
 
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { ApiProperty } from '@nestjs/swagger';
 
-@Entity('secret')
-export class Secret extends BaseEntity {
+export type SecretDocument = Secret & Document;
+
+@Schema()
+export class Secret {
+  _id: ObjectId;
+
   @ApiProperty({ description: 'Unique hash to identify the secrets' })
-  @ObjectIdColumn()
-  hash: ObjectID;
+  @Prop({ required: true })
+  hash: string;
 
   @ApiProperty({ description: `The secret itself` })
-  @Column()
+  @Prop({ required: true })
   secretText: string;
 
   @ApiProperty({
     description: `The date and time of the creation`,
   })
-  @Column({ type: 'timestamp', default: () => 'now()' })
+  @Prop({ required: true })
   createdAt: Date;
 
   @ApiProperty({
     description: `The secret cannot be reached after this time`,
   })
-  @Column()
+  @Prop({ required: true })
   expiresAt: Date;
 
   @ApiProperty({
     description: `How many times the secret can be viewed`,
   })
-  @Column()
+  @Prop({ required: true })
   remainingViews: number;
-
-  constructor(init?: Partial<Secret>) {
-    super();
-    Object.assign(this, init);
-  }
 }
+
+export const SecretSchema = SchemaFactory.createForClass(Secret);

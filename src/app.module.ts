@@ -1,10 +1,17 @@
+import * as config from 'config';
+
 import { Module } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { typeOrmConfig } from 'config/typeorm.config';
+import { MongooseModule } from '@nestjs/mongoose';
 import { SecretModule } from './secret/secret.module';
 
+const dbConfig = config.get('db');
 @Module({
-  imports: [TypeOrmModule.forRoot(typeOrmConfig), SecretModule],
+  imports: [
+    MongooseModule.forRoot(
+      `mongodb+srv://${dbConfig.username}:${dbConfig.password}@${dbConfig.host}/${dbConfig.database}?retryWrites=true&w=majority`,
+    ),
+    SecretModule,
+  ],
   controllers: [],
   providers: [],
 })
