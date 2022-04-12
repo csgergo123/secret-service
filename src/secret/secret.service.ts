@@ -3,10 +3,10 @@ import { Model } from 'mongoose';
 import * as moment from 'moment';
 
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { InjectModel } from '@nestjs/mongoose';
 
 import { Secret, SecretDocument } from './schemas/secret.schema';
 import { CreateSecretDto } from './dto/create-secret.dto';
-import { InjectModel } from '@nestjs/mongoose';
 
 @Injectable()
 export class SecretService {
@@ -58,9 +58,15 @@ export class SecretService {
     return decreasedSecret;
   }
 
-  async findByHash(hash: string): Promise<Secret> {
+  private async findByHash(hash: string): Promise<Secret> {
     try {
-      return this.secretModel.findOne({ hash }).exec();
+      return this.secretModel
+        .findOne({
+          hash,
+          remainingViews: { $gt: 0 }, // Still be remaining views
+          expiresAt: { $gt: moment() }, // expires at should be in the future
+        })
+        .exec();
     } catch (error) {
       this.logger.error(`Error during find secret.`, error);
     }
