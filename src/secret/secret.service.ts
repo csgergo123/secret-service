@@ -24,7 +24,7 @@ export class SecretService {
         .add(createSecretDto.expireAfter, 'seconds')
         .toISOString();
     } else {
-      expiresAtDate = '0';
+      expiresAtDate = moment().add(1000, 'years').toISOString();
     }
 
     try {
