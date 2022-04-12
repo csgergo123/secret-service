@@ -1,6 +1,6 @@
 import * as config from 'config';
 
-import { Logger, ValidationPipe } from '@nestjs/common';
+import { HttpStatus, Logger, ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module';
@@ -17,6 +17,7 @@ async function bootstrap() {
       whitelist: true,
       transform: true,
       forbidNonWhitelisted: true,
+      errorHttpStatusCode: HttpStatus.METHOD_NOT_ALLOWED,
       transformOptions: {
         enableImplicitConversion: true,
       },
