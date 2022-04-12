@@ -1,0 +1,7 @@
+db:
+    host: 'cluster0.i1ctf.mongodb.net'
+    username: 'secretuser'
+    password: 'QwUGsMvx3KuYC1mu'
+    synchronize: true
+
+environment: 'development'
