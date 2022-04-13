@@ -1,4 +1,3 @@
-import { CryptService } from './crypt/crypt.service';
 import { ObjectId } from 'mongodb';
 import { Model } from 'mongoose';
 import * as moment from 'moment';
@@ -8,6 +7,7 @@ import { InjectModel } from '@nestjs/mongoose';
 
 import { Secret, SecretDocument } from './schemas/secret.schema';
 import { CreateSecretDto } from './dto/create-secret.dto';
+import { CryptService } from './crypt/crypt.service';
 
 @Injectable()
 export class SecretService {
@@ -41,8 +41,17 @@ export class SecretService {
         expiresAt: expiresAtDate,
         createdAt: now.toISOString(),
       });
-      this.logger.log(`Secret ${createSecretDto.secret} created.`);
-      return secret.save();
+
+      this.logger.log(`Secret hash: ${secret.hash} created`);
+      this.logger.debug(`Secret text: ${createSecretDto.secret}`);
+
+      await secret.save();
+
+      const secretObj = secret.toObject();
+      delete secretObj._id;
+      delete secretObj.__v;
+
+      return secretObj;
     } catch (error) {
       this.logger.error(
         `Failed to create secret ${JSON.stringify(createSecretDto)}.`,
@@ -53,36 +62,35 @@ export class SecretService {
   }
 
   async getSecretByHash(hash: string): Promise<Secret> {
-    const secret = await this.findByHash(hash);
+    let secret = await this.findByHash(hash);
     if (!secret) {
       this.logger.debug(`Secret with hash:${hash} not found`);
       throw new NotFoundException(`Secret not found`);
     }
 
-    const decreasedSecret = await this.decreaseRemainingViews(secret);
+    secret = await this.decreaseRemainingViews(secret);
 
-    const decryptedSecretText = this.cryptService.decrypt(
-      decreasedSecret.secretText,
-    );
+    const decryptedSecretText = this.cryptService.decrypt(secret.secretText);
 
     // Update the encoded secret text to the decrypted one
-    decreasedSecret.secretText = decryptedSecretText;
-    delete decreasedSecret._id;
-
-    return decreasedSecret;
+    secret.secretText = decryptedSecretText;
+    return secret;
   }
 
   private async findByHash(hash: string): Promise<Secret> {
     try {
-      return this.secretModel
-        .findOne({
-          hash,
-          remainingViews: { $gt: 0 }, // Still be remaining views
-          expiresAt: { $gt: moment() }, // expires at should be in the future
-        })
+      return await this.secretModel
+        .findOne(
+          {
+            hash,
+            remainingViews: { $gt: 0 }, // Still be remaining views
+            expiresAt: { $gt: moment() }, // expires at should be in the future
+          },
+          { _id: 0 }, // Remove the _id from the result
+        )
         .exec();
     } catch (error) {
-      this.logger.error(`Error during find secret.`, error);
+      this.logger.error(`Error during find secret`, error);
     }
   }
 
@@ -90,7 +98,7 @@ export class SecretService {
     try {
       return this.secretModel.find().exec();
     } catch (error) {
-      this.logger.error(`Error during find secret.`, error);
+      this.logger.error(`Error during find secret`, error);
     }
   }
 
@@ -98,10 +106,16 @@ export class SecretService {
     secret.remainingViews--;
     try {
       await this.secretModel
-        .findByIdAndUpdate(secret._id, secret)
+        .findOneAndUpdate({ hash: secret.hash }, secret)
         .setOptions({ overwrite: true, new: false });
+      this.logger.log(
+        `Decrease hash: ${secret.hash}. Remaining views: ${secret.remainingViews}`,
+      );
     } catch (error) {
-      this.logger.error(`Error during decrease secret remaining views.`, error);
+      this.logger.error(
+        `Error during decrease the remaining views in hash:${secret.hash}`,
+        error,
+      );
     }
     return secret;
   }
