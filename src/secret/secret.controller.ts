@@ -1,4 +1,3 @@
-import { ObjectId } from 'mongodb';
 import { Controller, Get, Post, Body, Param } from '@nestjs/common';
 import { SecretService } from './secret.service';
 import { CreateSecretDto } from './dto/create-secret.dto';

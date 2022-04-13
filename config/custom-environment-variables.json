@@ -4,5 +4,8 @@
     "database": "DB_NAME",
     "username": "DB_USER",
     "password": "DB_PASSWORD"
+  },
+  "crypt": {
+    "encryptionKey": "ENCRYPTION_KEY"
   }
 }

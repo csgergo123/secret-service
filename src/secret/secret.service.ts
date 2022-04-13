@@ -1,3 +1,4 @@
+import { CryptService } from './crypt/crypt.service';
 import { ObjectId } from 'mongodb';
 import { Model } from 'mongoose';
 import * as moment from 'moment';
@@ -14,6 +15,7 @@ export class SecretService {
 
   constructor(
     @InjectModel(Secret.name) private secretModel: Model<SecretDocument>,
+    private cryptService: CryptService,
   ) {}
 
   async addSecret(createSecretDto: CreateSecretDto): Promise<Secret> {
@@ -27,10 +29,14 @@ export class SecretService {
       expiresAtDate = moment().add(1000, 'years').toISOString();
     }
 
+    const encryptedSecretText = this.cryptService.encrypt(
+      createSecretDto.secret,
+    );
+
     try {
       const secret = new this.secretModel({
         hash: new ObjectId(),
-        secretText: createSecretDto.secret,
+        secretText: encryptedSecretText,
         remainingViews: createSecretDto.expireAfterViews,
         expiresAt: expiresAtDate,
         createdAt: now.toISOString(),
@@ -54,6 +60,14 @@ export class SecretService {
     }
 
     const decreasedSecret = await this.decreaseRemainingViews(secret);
+
+    const decryptedSecretText = this.cryptService.decrypt(
+      decreasedSecret.secretText,
+    );
+
+    // Update the encoded secret text to the decrypted one
+    decreasedSecret.secretText = decryptedSecretText;
+    delete decreasedSecret._id;
 
     return decreasedSecret;
   }
@@ -83,11 +97,12 @@ export class SecretService {
   private async decreaseRemainingViews(secret: Secret): Promise<Secret> {
     secret.remainingViews--;
     try {
-      return this.secretModel
+      await this.secretModel
         .findByIdAndUpdate(secret._id, secret)
         .setOptions({ overwrite: true, new: false });
     } catch (error) {
       this.logger.error(`Error during decrease secret remaining views.`, error);
     }
+    return secret;
   }
 }
