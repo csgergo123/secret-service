@@ -42,7 +42,8 @@ export class SecretService {
         createdAt: now.toISOString(),
       });
 
-      this.logger.log(`Secret ${createSecretDto.secret} created.`);
+      this.logger.log(`Secret hash: ${secret.hash} created`);
+      this.logger.debug(`Secret text: ${createSecretDto.secret}`);
 
       await secret.save();
 
@@ -61,21 +62,18 @@ export class SecretService {
   }
 
   async getSecretByHash(hash: string): Promise<Secret> {
-    const secret = await this.findByHash(hash);
+    let secret = await this.findByHash(hash);
     if (!secret) {
       this.logger.debug(`Secret with hash:${hash} not found`);
       throw new NotFoundException(`Secret not found`);
     }
 
-    const decreasedSecret = await this.decreaseRemainingViews(secret);
+    secret = await this.decreaseRemainingViews(secret);
 
-    const decryptedSecretText = this.cryptService.decrypt(
-      decreasedSecret.secretText,
-    );
+    const decryptedSecretText = this.cryptService.decrypt(secret.secretText);
 
     // Update the encoded secret text to the decrypted one
-    decreasedSecret.secretText = decryptedSecretText;
-
+    secret.secretText = decryptedSecretText;
     return secret;
   }
 
@@ -92,7 +90,7 @@ export class SecretService {
         )
         .exec();
     } catch (error) {
-      this.logger.error(`Error during find secret.`, error);
+      this.logger.error(`Error during find secret`, error);
     }
   }
 
@@ -100,7 +98,7 @@ export class SecretService {
     try {
       return this.secretModel.find().exec();
     } catch (error) {
-      this.logger.error(`Error during find secret.`, error);
+      this.logger.error(`Error during find secret`, error);
     }
   }
 
@@ -110,6 +108,9 @@ export class SecretService {
       await this.secretModel
         .findOneAndUpdate({ hash: secret.hash }, secret)
         .setOptions({ overwrite: true, new: false });
+      this.logger.log(
+        `Decrease hash: ${secret.hash}. Remaining views: ${secret.remainingViews}`,
+      );
     } catch (error) {
       this.logger.error(
         `Error during decrease the remaining views in hash:${secret.hash}`,

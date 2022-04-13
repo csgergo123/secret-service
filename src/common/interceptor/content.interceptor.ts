@@ -23,10 +23,12 @@ export class ContentInterceptor implements NestInterceptor {
           // Default
         } else if (content === 'application/xml') {
           res.header('Content-Type', 'application/xml');
-          console.log(data);
-          data = parse('data', data);
+          if (data.toObject !== undefined) {
+            data = parse('data', data.toObject());
+          } else {
+            data = parse('data', data);
+          }
         } else {
-          data = data;
           res.header('Content-Type', 'application/json');
         }
         return data;
