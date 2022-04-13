@@ -6,12 +6,12 @@ import { ApiProperty } from '@nestjs/swagger';
 
 export type SecretDocument = Secret & Document;
 
-@Schema()
+@Schema({ versionKey: false })
 export class Secret {
   _id: ObjectId;
 
   @ApiProperty({ description: 'Unique hash to identify the secrets' })
-  @Prop({ required: true })
+  @Prop({ required: true, unique: true })
   hash: string;
 
   @ApiProperty({ description: `The secret itself` })
