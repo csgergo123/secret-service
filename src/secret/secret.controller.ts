@@ -1,7 +1,12 @@
 import { Controller, Get, Post, Body, Param } from '@nestjs/common';
 import { SecretService } from './secret.service';
 import { CreateSecretDto } from './dto/create-secret.dto';
-import { ApiOperation, ApiProduces, ApiResponse } from '@nestjs/swagger';
+import {
+  ApiConsumes,
+  ApiOperation,
+  ApiProduces,
+  ApiResponse,
+} from '@nestjs/swagger';
 
 import { Secret } from './schemas/secret.schema';
 
@@ -23,6 +28,7 @@ export class SecretController {
     status: 405,
     description: 'Invalid input',
   })
+  @ApiConsumes('application/x-www-form-urlencoded')
   @ApiProduces('application/json', 'application/xml')
   async addSecret(@Body() createSecretDto: CreateSecretDto): Promise<Secret> {
     return await this.secretService.addSecret(createSecretDto);
