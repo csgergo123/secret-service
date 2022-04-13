@@ -2,3 +2,6 @@ db:
     synchronize: false
     
 environment: 'production'
+
+log:
+    level: 'warn'

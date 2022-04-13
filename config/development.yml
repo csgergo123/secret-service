@@ -8,3 +8,6 @@ db:
     synchronize: true
 
 environment: 'development'
+
+log:
+    level: debug
