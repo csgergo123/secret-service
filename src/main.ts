@@ -1,6 +1,6 @@
 import * as config from 'config';
 
-import { HttpStatus, Logger, ValidationPipe } from '@nestjs/common';
+import { HttpStatus, Logger, LogLevel, ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 
@@ -10,8 +10,24 @@ async function bootstrap() {
   const logger = new Logger('bootstrap');
 
   const serverConfig = config.get('server');
+  const environment = config.get('environment');
+  const logConfig = config.get('log');
 
-  const app = await NestFactory.create(AppModule);
+  let logLevels: LogLevel[];
+  if (environment === 'development') {
+    logLevels = ['log', 'error', 'warn', 'debug', 'verbose'];
+  } else if (logConfig.level === 'debug') {
+    logLevels = ['log', 'error', 'warn', 'debug'];
+  } else if (logConfig.level === 'error') {
+    logLevels = ['log', 'error'];
+  } else {
+    // Production
+    logLevels = ['log', 'error', 'warn'];
+  }
+
+  const app = await NestFactory.create(AppModule, {
+    logger: logLevels,
+  });
 
   app.useGlobalPipes(
     new ValidationPipe({
