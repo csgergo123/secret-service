@@ -44,7 +44,7 @@ async function bootstrap() {
   const options = new DocumentBuilder()
     .setTitle('Secret service API')
     .setDescription('Secret service API')
-    .setVersion('0.1')
+    .setVersion('1.0')
     .build();
   const document = SwaggerModule.createDocument(app, options);
   SwaggerModule.setup('swagger', app, document);
