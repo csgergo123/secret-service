@@ -9,6 +9,11 @@ export class CryptService {
 
   IV_LENGTH = 16; // For AES, this is always 16
 
+  /** Encrypt the specified text.
+   *
+   * @param text Text
+   * @returns Encrypted text
+   */
   encrypt(text: string): string {
     const iv = Buffer.from(crypto.randomBytes(this.IV_LENGTH))
       .toString('hex')
@@ -24,6 +29,11 @@ export class CryptService {
     return iv + ':' + encryptedText.toString('hex');
   }
 
+  /** Decrypt the encryption of the specified text.
+   *
+   * @param text Encrypted text
+   * @returns Decrypted text
+   */
   decrypt(text: string): string {
     const textParts: string[] = text.includes(':') ? text.split(':') : [];
     const iv = Buffer.from(textParts.shift() || '', 'binary');

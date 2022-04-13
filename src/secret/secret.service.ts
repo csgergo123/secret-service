@@ -18,6 +18,12 @@ export class SecretService {
     private cryptService: CryptService,
   ) {}
 
+  /** Adds a secret and save it.
+   * The secret text is stored encrypted.
+   *
+   * @param createSecretDto
+   * @returns Secret object
+   */
   async addSecret(createSecretDto: CreateSecretDto): Promise<Secret> {
     const now = moment();
     let expiresAtDate: string;
@@ -61,6 +67,11 @@ export class SecretService {
     }
   }
 
+  /** Finds the secret by its unique hash. Decrypt the encrypted secret and decrease the remaining views property by one.
+   *
+   * @param hash Unique hash of the secret
+   * @returns Secret object
+   */
   async getSecretByHash(hash: string): Promise<Secret> {
     let secret = await this.findByHash(hash);
     if (!secret) {
@@ -77,6 +88,11 @@ export class SecretService {
     return secret;
   }
 
+  /** Finds the secret by its hash value if the remaining view is greater than 0 and expires at points in the future.
+   *
+   * @param hash
+   * @returns Secret object
+   */
   private async findByHash(hash: string): Promise<Secret> {
     try {
       return await this.secretModel
@@ -102,6 +118,11 @@ export class SecretService {
     }
   }
 
+  /** Decreases the secret's remaining views value by 1.
+   *
+   * @param secret
+   * @returns Secret object
+   */
   private async decreaseRemainingViews(secret: Secret): Promise<Secret> {
     secret.remainingViews--;
     try {
