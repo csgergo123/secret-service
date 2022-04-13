@@ -1,5 +1,6 @@
-import { ApiProperty } from '@nestjs/swagger';
 import { IsNumber, IsString, Min } from 'class-validator';
+
+import { ApiProperty } from '@nestjs/swagger';
 
 export class CreateSecretDto {
   @ApiProperty({ description: `This text will be saved as a secret` })
