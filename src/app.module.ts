@@ -1,10 +1,26 @@
-import { Module } from '@nestjs/common';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
+import * as config from 'config';
 
+import { Module } from '@nestjs/common';
+import { MongooseModule } from '@nestjs/mongoose';
+import { APP_INTERCEPTOR } from '@nestjs/core';
+
+import { ContentInterceptor } from './common/interceptor/content.interceptor';
+import { SecretModule } from './secret/secret.module';
+
+const dbConfig = config.get('db');
 @Module({
-  imports: [],
-  controllers: [AppController],
-  providers: [AppService],
+  imports: [
+    MongooseModule.forRoot(
+      `mongodb+srv://${dbConfig.username}:${dbConfig.password}@${dbConfig.host}/${dbConfig.database}?retryWrites=true&w=majority`,
+    ),
+    SecretModule,
+  ],
+  controllers: [],
+  providers: [
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: ContentInterceptor,
+    },
+  ],
 })
 export class AppModule {}
